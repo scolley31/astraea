@@ -21,7 +21,6 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicInteger;
-
 import org.apache.kafka.clients.producer.Partitioner;
 import org.apache.kafka.common.Cluster;
 import org.apache.kafka.common.PartitionInfo;
@@ -30,11 +29,10 @@ import org.apache.kafka.common.utils.Utils;
 public class YourPartitioner implements Partitioner {
 
   private final ConcurrentMap<String, AtomicInteger> topicCounterMap = new ConcurrentHashMap<>();
+
   // get your magic configs
   @Override
-  public void configure(Map<String, ?> configs) {
-
-  }
+  public void configure(Map<String, ?> configs) {}
 
   // write your magic code
   @Override
