@@ -16,22 +16,45 @@
  */
 package org.astraea.common.partitioner;
 
+import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.atomic.AtomicInteger;
+
 import org.apache.kafka.clients.producer.Partitioner;
 import org.apache.kafka.common.Cluster;
+import org.apache.kafka.common.PartitionInfo;
+import org.apache.kafka.common.utils.Utils;
 
 public class YourPartitioner implements Partitioner {
 
+  private final ConcurrentMap<String, AtomicInteger> topicCounterMap = new ConcurrentHashMap<>();
   // get your magic configs
   @Override
-  public void configure(Map<String, ?> configs) {}
+  public void configure(Map<String, ?> configs) {
+
+  }
 
   // write your magic code
   @Override
   public int partition(
       String topic, Object key, byte[] keyBytes, Object value, byte[] valueBytes, Cluster cluster) {
-    int partitionKey = (Integer) key;
-    return partitionKey % 2;
+    int nextValue = nextValue(topic);
+    List<PartitionInfo> availablePartitions = cluster.availablePartitionsForTopic(topic);
+    if (!availablePartitions.isEmpty()) {
+      int part = Utils.toPositive(nextValue) % availablePartitions.size();
+      return availablePartitions.get(part).partition();
+    } else {
+      // no partitions are available, give a non-available partition
+      int numPartitions = cluster.partitionsForTopic(topic).size();
+      return Utils.toPositive(nextValue) % numPartitions;
+    }
+  }
+
+  private int nextValue(String topic) {
+    AtomicInteger counter = topicCounterMap.computeIfAbsent(topic, k -> new AtomicInteger(0));
+    return counter.getAndIncrement();
   }
 
   @Override
